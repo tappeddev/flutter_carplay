@@ -236,11 +236,14 @@ class FlutterCarplay {
     required String elementId,
     required List<CPInformationItem> items,
   }) async {
-    final bool? isCompleted = await _carPlayController.methodChannel
-        .invokeMethod('updateInformationTemplateItems', <String, dynamic>{
-      'elementId': elementId,
-      'items': items.map((CPInformationItem item) => item.toJson()).toList(),
-    });
+    final bool? isCompleted =
+        await FlutterCarPlayController.flutterToNativeModule(
+      FCPChannelTypes.updateInformationTemplateItems,
+      <String, dynamic>{
+        'elementId': elementId,
+        'items': items.map((CPInformationItem item) => item.toJson()).toList(),
+      },
+    );
 
     if (isCompleted == true) {
       final template = FlutterCarPlayController
@@ -255,12 +258,15 @@ class FlutterCarplay {
     required String elementId,
     required List<CPTextButton> actions,
   }) async {
-    final bool? isCompleted = await _carPlayController.methodChannel
-        .invokeMethod('updateInformationTemplateActions', <String, dynamic>{
-      'elementId': elementId,
-      'actions':
-          actions.map((CPTextButton action) => action.toJson()).toList(),
-    });
+    final bool? isCompleted =
+        await FlutterCarPlayController.flutterToNativeModule(
+      FCPChannelTypes.updateInformationTemplateActions,
+      <String, dynamic>{
+        'elementId': elementId,
+        'actions':
+            actions.map((CPTextButton action) => action.toJson()).toList(),
+      },
+    );
 
     if (isCompleted == true) {
       final template = FlutterCarPlayController
