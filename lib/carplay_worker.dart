@@ -112,9 +112,14 @@ class FlutterCarplay {
           );
           break;
         case FCPChannelTypes.onScreenBackButtonPressed:
-          FlutterCarPlayController.templateHistory.removeWhere(
-            (CPTemplate item) => item.uniqueId == event['data']['elementId'],
-          );
+          final String elementId = event['data']['elementId'];
+          final CPTemplate? poppedTemplate = FlutterCarPlayController
+              .templateHistory
+              .where((item) => item.uniqueId == elementId)
+              .firstOrNull;
+          poppedTemplate?.onPop?.call();
+          FlutterCarPlayController.templateHistory
+              .removeWhere((item) => item.uniqueId == elementId);
           break;
         default:
           break;
