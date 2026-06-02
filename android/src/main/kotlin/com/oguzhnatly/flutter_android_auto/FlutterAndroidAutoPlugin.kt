@@ -265,9 +265,11 @@ class FlutterAndroidAutoPlugin : FlutterPlugin, EventChannel.StreamHandler {
                     }
                 }
 
-                listTemplateData[elementId] = data.toMutableMap()
-                listTemplateBackButtons[elementId] = true
-                listTemplateScreens[elementId] = newScreen
+                if (runtimeType == "FAAListTemplate") {
+                    listTemplateData[elementId] = data.toMutableMap()
+                    listTemplateBackButtons[elementId] = true
+                    listTemplateScreens[elementId] = newScreen
+                }
 
                 templatesByElementId[elementId] = template
                 screensByElementId[elementId] = newScreen
@@ -309,9 +311,11 @@ class FlutterAndroidAutoPlugin : FlutterPlugin, EventChannel.StreamHandler {
                 currentTemplate = template
                 val elementId = data["_elementId"] as? String ?: ""
                 currentRootTemplateElementId = elementId
-                listTemplateData[elementId] = data.toMutableMap()
-                listTemplateBackButtons[elementId] = false
-                currentScreen?.let { listTemplateScreens[elementId] = it }
+                if (runtimeType == "FAAListTemplate") {
+                    listTemplateData[elementId] = data.toMutableMap()
+                    listTemplateBackButtons[elementId] = false
+                    currentScreen?.let { listTemplateScreens[elementId] = it }
+                }
                 templatesByElementId[elementId] = template
                 currentScreen?.let { screensByElementId[elementId] = it }
                 currentScreen?.invalidate()
@@ -459,12 +463,12 @@ class FlutterAndroidAutoPlugin : FlutterPlugin, EventChannel.StreamHandler {
 
             if (isSingleList) {
                 listTemplateBuilder.setSingleList(
-                    createItemListFromSection(sections.first())
+                    createItemListFromSection(sections.first(), allowSelection = true)
                 )
             } else {
                 for (section in sections) {
                     val sectionedItemList = SectionedItemList.create(
-                        createItemListFromSection(section), section.title ?: ""
+                        createItemListFromSection(section, allowSelection = false), section.title ?: ""
                     )
                     listTemplateBuilder.addSectionedList(sectionedItemList)
                 }
@@ -487,10 +491,13 @@ class FlutterAndroidAutoPlugin : FlutterPlugin, EventChannel.StreamHandler {
         }
     }
 
-    private suspend fun createItemListFromSection(section: FAAListSection): ItemList {
+    private suspend fun createItemListFromSection(
+        section: FAAListSection,
+        allowSelection: Boolean = true
+    ): ItemList {
         val itemListBuilder = ItemList.Builder()
         val useSelectionListener =
-            section.isOnSelectedListenerActive || section.selectedIndex != null
+            allowSelection && (section.isOnSelectedListenerActive || section.selectedIndex != null)
 
         for (item in section.items) {
             itemListBuilder.addItem(
