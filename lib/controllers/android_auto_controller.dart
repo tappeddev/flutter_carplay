@@ -44,6 +44,15 @@ class FlutterAndroidAutoController {
     // pass through unchanged.
     await resolveSvgInPayload(data, size: FlutterAndroidAuto.svgRasterSize);
 
+    return FlutterAndroidAutoController.flutterToNativeModuleStatic(type, data);
+  }
+
+  /// Templates update themselves without a controller instance, so this static
+  /// entry point shares the same MethodChannel path as [flutterToNativeModule].
+  static Future<bool?> flutterToNativeModuleStatic(
+    FAAChannelTypes type, [
+    dynamic data,
+  ]) async {
     final bool? value = await _methodChannel.invokeMethod<bool>(
       type.name,
       data,
@@ -94,17 +103,6 @@ class FlutterAndroidAutoController {
       }
     });
   }*/
-
-  static Future<bool?> flutterToNativeModuleStatic(
-    FAAChannelTypes type, [
-    dynamic data,
-  ]) async {
-    final bool? value = await _methodChannel.invokeMethod<bool>(
-      type.name,
-      data,
-    );
-    return value;
-  }
 
   static Future<void> updateAAListTemplateSections({
     required String elementId,
@@ -177,19 +175,19 @@ class FlutterAndroidAutoController {
     }
   }
 
-/*void processFAAAlertActionPressed(String elementId) {
+  /*void processFAAAlertActionPressed(String elementId) {
     CAAAlertAction selectedAlertAction = currentPresentTemplate!.actions
         .firstWhere((e) => e.uniqueId == elementId);
     selectedAlertAction.onPress();
   }*/
 
-/*void processFCPAlertTemplateCompleted(bool completed) {
+  /*void processFCPAlertTemplateCompleted(bool completed) {
     if (currentPresentTemplate?.onPresent != null) {
       currentPresentTemplate!.onPresent!(completed);
     }
   }*/
 
-/*void processFCPGridButtonPressed(String elementId) {
+  /*void processFCPGridButtonPressed(String elementId) {
     CPGridButton? gridButton;
     l1:
     for (var t in templateHistory) {
@@ -205,7 +203,7 @@ class FlutterAndroidAutoController {
     if (gridButton != null) gridButton.onPress();
   }*/
 
-/*void processFCPBarButtonPressed(String elementId) {
+  /*void processFCPBarButtonPressed(String elementId) {
     CPBarButton? barButton;
     l1:
     for (var t in templateHistory) {
@@ -217,7 +215,7 @@ class FlutterAndroidAutoController {
     if (barButton != null) barButton.onPress();
   }*/
 
-/*void processFCPTextButtonPressed(String elementId) {
+  /*void processFCPTextButtonPressed(String elementId) {
     l1:
     for (var t in templateHistory) {
       if (t.runtimeType.toString() == "CPPointOfInterestTemplate") {
