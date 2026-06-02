@@ -4,16 +4,19 @@
 //
 
 import CarPlay
+import Flutter
 
 @available(iOS 26.0, *)
 final class FCPListImageRowItemGridElement {
   private(set) var _super: CPListImageRowItemGridElement?
   private(set) var elementId: String
   private(set) var image: String
+  private var imageData: FlutterStandardTypedData?
 
   init(obj: [String: Any]) {
     self.elementId = obj["_elementId"] as! String
     self.image = obj["image"] as! String
+    self.imageData = obj["imageData"] as? FlutterStandardTypedData
   }
 
   var get: CPListImageRowItemElement {
@@ -21,11 +24,8 @@ final class FCPListImageRowItemGridElement {
       image: makeSafeUIPlaceholder(),
     )
 
-    let imageSource = self.image.toImageSource()
-    loadUIImageAsync(from: imageSource) { uiImage in
-      if let uiImage = uiImage {
-        listImageRowItemElement.image = uiImage
-      }
+    loadUIImage(from: image, bytes: imageData) { uiImage in
+      listImageRowItemElement.image = uiImage
     }
 
     self._super = listImageRowItemElement
@@ -34,16 +34,15 @@ final class FCPListImageRowItemGridElement {
 
   public func update(args: [String: Any]) {
     let image = args["image"] as? String
+    let imageData = args["imageData"] as? FlutterStandardTypedData
 
     if let image = image, image != self.image {
       self._super?.image = makeSafeUIPlaceholder()
-      let imageSource = image.toImageSource()
-      loadUIImageAsync(from: imageSource) { uiImage in
-        if let uiImage = uiImage {
-          self._super?.image = uiImage
-        }
+      loadUIImage(from: image, bytes: imageData) { uiImage in
+        self._super?.image = uiImage
       }
       self.image = image
+      self.imageData = imageData
     }
   }
 }

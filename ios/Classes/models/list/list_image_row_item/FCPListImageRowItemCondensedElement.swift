@@ -4,12 +4,14 @@
 //
 
 import CarPlay
+import Flutter
 
 @available(iOS 26.0, *)
 final class FCPListImageRowItemCondensedElement {
   private(set) var _super: CPListImageRowItemCondensedElement?
   private(set) var elementId: String
   private(set) var image: String
+  private var imageData: FlutterStandardTypedData?
   var imageShape: CPListImageRowItemCondensedElement.Shape
   var title: String
   var subtitle: String?
@@ -18,6 +20,7 @@ final class FCPListImageRowItemCondensedElement {
   init(obj: [String: Any]) {
     self.elementId = obj["_elementId"] as! String
     self.image = obj["image"] as! String
+    self.imageData = obj["imageData"] as? FlutterStandardTypedData
     self.title = obj["title"] as! String
     self.subtitle = obj["subtitle"] as? String
     self.imageShape = Self.getImageShape(fromString: obj["imageShape"] as? String)
@@ -33,11 +36,8 @@ final class FCPListImageRowItemCondensedElement {
       accessorySymbolName: accessorySymbolName,
     )
 
-    let imageSource = self.image.toImageSource()
-    loadUIImageAsync(from: imageSource) { uiImage in
-      if let uiImage = uiImage {
-        listImageRowItemElement.image = uiImage
-      }
+    loadUIImage(from: image, bytes: imageData) { uiImage in
+      listImageRowItemElement.image = uiImage
     }
 
     self._super = listImageRowItemElement
@@ -61,19 +61,18 @@ final class FCPListImageRowItemCondensedElement {
 
   public func update(args: [String: Any]) {
     let image = args["image"] as? String
+    let imageData = args["imageData"] as? FlutterStandardTypedData
     let title = args["title"] as? String
     let subtitle = args["subtitle"] as? String
     let accessorySymbolName = args["accessorySymbolName"] as? String
 
     if let image = image, image != self.image {
       self._super?.image = makeSafeUIPlaceholder()
-      let imageSource = image.toImageSource()
-      loadUIImageAsync(from: imageSource) { uiImage in
-        if let uiImage = uiImage {
-          self._super?.image = uiImage
-        }
+      loadUIImage(from: image, bytes: imageData) { uiImage in
+        self._super?.image = uiImage
       }
       self.image = image
+      self.imageData = imageData
     }
 
     if let title = title {

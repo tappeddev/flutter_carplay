@@ -5,7 +5,35 @@
 //  Created by Oğuzhan Atalay on 21.08.2021.
 //
 
+import Flutter
 import UIKit
+
+// Creates a UIImage from raw PNG bytes sent over the MethodChannel.
+// Used for Flutter asset SVGs that are rasterized to PNG on the Dart side,
+// since UIImage cannot decode SVG directly. Returns nil when the data is
+// missing or cannot be decoded so callers can fall back to string resolution.
+func makeUIImage(fromBytes data: FlutterStandardTypedData?) -> UIImage? {
+  guard let data = data else { return nil }
+  return UIImage(data: data.data)
+}
+
+@available(iOS 14.0, *)
+func loadUIImage(
+  from imagePath: String,
+  bytes imageData: FlutterStandardTypedData?,
+  completion: @escaping (UIImage) -> Void
+) {
+  if let bytesImage = makeUIImage(fromBytes: imageData) {
+    completion(bytesImage)
+    return
+  }
+
+  loadUIImageAsync(from: imagePath.toImageSource()) { uiImage in
+    if let uiImage = uiImage {
+      completion(uiImage)
+    }
+  }
+}
 
 // Image Source (no UIImage creation here)
 enum ImageSource {

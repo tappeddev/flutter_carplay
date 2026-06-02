@@ -62,7 +62,7 @@ class _MyAppState extends State<MyApp> {
           detailText: 'Start progress bar',
           isPlaying: false,
           playbackProgress: 0,
-          image: 'images/logo_flutter_1080px_clr.png',
+          image: 'images/icon.svg',
           onPress: (complete, self) {
             for (var i = 1; i <= 100; i++) {
               sleep(const Duration(milliseconds: 10));
@@ -150,6 +150,15 @@ class _MyAppState extends State<MyApp> {
             complete();
           },
         ),
+        CPListItem(
+          text: 'SVG Examples',
+          detailText: 'Rows, grid buttons, POI, and image rows.',
+          image: 'images/svg_navigation.svg',
+          onPress: (complete, self) {
+            openSvgExamplesTemplate();
+            complete();
+          },
+        ),
       ],
       header: 'Features',
     ));
@@ -214,6 +223,7 @@ class _MyAppState extends State<MyApp> {
                 title: 'Page 1',
                 subtitle: 'Click to open page 1',
                 isBrowsable: true,
+                imageUrl: 'images/icon.svg',
                 onPress: (complete, AAListItem item) {
                   print('Item for Page 1 pressed');
                   FlutterAndroidAuto.push(
@@ -281,6 +291,15 @@ class _MyAppState extends State<MyApp> {
                       ],
                     ),
                   );
+                  complete();
+                },
+              ),
+              AAListItem(
+                title: 'SVG Examples',
+                subtitle: 'Open Android Auto rows backed by SVG assets',
+                imageUrl: 'images/svg_navigation.svg',
+                onPress: (complete, AAListItem item) {
+                  openSvgExamplesTemplate();
                   complete();
                 },
               ),
@@ -474,16 +493,204 @@ class _MyAppState extends State<MyApp> {
               // WE ARE NOT ENDORSED BY OR AFFILIATED WITH Google LLC.
               // ----- TRADEMARKS RIGHTS INFORMATION END -----
               //
-              // Using asset and network images for demonstration purposes.
-              image: i.isOdd
-                  ? 'https://storage.googleapis.com/cms-storage-bucket/icon_flutter.0dbfcc7a59cd1cf16282.png'
-                  : 'images/logo_flutter_1080px_clr.png',
+              // Using asset, SVG asset, and network images for demonstration
+              // purposes. SVG assets are rasterized to PNG before being sent to
+              // the native side.
+              image: switch (i % 3) {
+                0 =>
+                  'https://storage.googleapis.com/cms-storage-bucket/icon_flutter.0dbfcc7a59cd1cf16282.png',
+                1 => 'images/icon.svg',
+                _ => 'images/logo_flutter_1080px_clr.png',
+              },
               onPress: () {
                 print('Grid Button $i pressed');
               },
             ),
         ],
         systemIcon: 'systemIcon',
+      ),
+    );
+  }
+
+  void openSvgExamplesTemplate() {
+    if (Platform.isIOS) {
+      FlutterCarplay.push(
+        template: CPListTemplate(
+          title: 'SVG Examples',
+          sections: [
+            CPListSection(
+              header: 'Template Examples',
+              items: [
+                CPListItem(
+                  text: 'SVG List Item',
+                  detailText: 'CPListItem.image uses an SVG asset',
+                  image: 'images/svg_navigation.svg',
+                  onPress: (complete, self) {
+                    complete();
+                  },
+                ),
+                CPListItem(
+                  text: 'SVG Grid Template',
+                  detailText: 'CPGridTemplate with SVG CPGridButton images',
+                  image: 'images/svg_media.svg',
+                  onPress: (complete, self) {
+                    openSvgGridTemplate();
+                    complete();
+                  },
+                ),
+                CPListItem(
+                  text: 'SVG POI Template',
+                  detailText: 'CPPointOfInterest.image uses SVG assets',
+                  image: 'images/svg_poi.svg',
+                  onPress: (complete, self) {
+                    openSvgPoiTemplate();
+                    complete();
+                  },
+                ),
+              ],
+            ),
+            CPListSection(
+              header: 'Image Row and Grid Elements',
+              items: [
+                CPListImageRowItem(
+                  text: 'Legacy gridImages SVG layout',
+                  gridImages: const [
+                    'images/svg_navigation.svg',
+                    'images/svg_media.svg',
+                    'images/svg_poi.svg',
+                    'images/svg_warning.svg',
+                  ],
+                  imageTitles: const ['Nav', 'Media', 'POI', 'Alert'],
+                  onItemPress: (complete, self, index) {
+                    print('SVG image row item $index pressed');
+                    complete();
+                  },
+                ),
+                CPListImageRowItem(
+                  text: 'iOS 26 grid/card/row SVG elements',
+                  elements: [
+                    CPListImageRowItemCardElement(
+                      image: 'images/svg_navigation.svg',
+                      title: 'Navigate',
+                      subtitle: 'Card element',
+                    ),
+                    CPListImageRowItemGridElement(
+                      image: 'images/svg_media.svg',
+                    ),
+                    CPListImageRowItemImageGridElement(
+                      image: 'images/svg_poi.svg',
+                      title: 'POI',
+                      accessorySymbolName: 'mappin.circle.fill',
+                    ),
+                    CPListImageRowItemRowElement(
+                      image: 'images/svg_warning.svg',
+                      title: 'Warning',
+                      subtitle: 'Row element',
+                    ),
+                  ],
+                  allowsMultipleLines: true,
+                ),
+              ],
+            ),
+          ],
+          systemIcon: 'photo.stack',
+        ),
+      );
+    } else if (Platform.isAndroid) {
+      FlutterAndroidAuto.push(
+        template: AAListTemplate(
+          title: 'SVG Examples',
+          sections: [
+            AAListSection(
+              title: 'Android Auto SVG Rows',
+              items: [
+                AAListItem(
+                  title: 'Navigation SVG',
+                  subtitle: 'AAListItem.imageUrl asset SVG',
+                  imageUrl: 'images/svg_navigation.svg',
+                ),
+                AAListItem(
+                  title: 'Media SVG',
+                  subtitle: 'A second SVG asset for row rendering',
+                  imageUrl: 'images/svg_media.svg',
+                ),
+                AAListItem(
+                  title: 'Point of Interest SVG',
+                  subtitle: 'A map marker styled SVG asset',
+                  imageUrl: 'images/svg_poi.svg',
+                ),
+                AAListItem(
+                  title: 'Warning SVG',
+                  subtitle: 'High contrast SVG asset',
+                  imageUrl: 'images/svg_warning.svg',
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  void openSvgGridTemplate() {
+    FlutterCarplay.push(
+      template: CPGridTemplate(
+        title: 'SVG Grid',
+        buttons: [
+          CPGridButton(
+            titleVariants: ['Navigation'],
+            image: 'images/svg_navigation.svg',
+            onPress: () => print('Navigation SVG grid button pressed'),
+          ),
+          CPGridButton(
+            titleVariants: ['Media'],
+            image: 'images/svg_media.svg',
+            onPress: () => print('Media SVG grid button pressed'),
+          ),
+          CPGridButton(
+            titleVariants: ['POI'],
+            image: 'images/svg_poi.svg',
+            onPress: () => print('POI SVG grid button pressed'),
+          ),
+          CPGridButton(
+            titleVariants: ['Warning'],
+            image: 'images/svg_warning.svg',
+            onPress: () => print('Warning SVG grid button pressed'),
+          ),
+        ],
+        systemIcon: 'square.grid.2x2',
+      ),
+    );
+  }
+
+  void openSvgPoiTemplate() {
+    FlutterCarplay.push(
+      template: CPPointOfInterestTemplate(
+        title: 'SVG POI',
+        poi: [
+          CPPointOfInterest(
+            latitude: 51.5052,
+            longitude: 7.4938,
+            title: 'SVG Cafe',
+            subtitle: 'POI marker SVG',
+            summary: 'Uses images/svg_poi.svg',
+            detailTitle: 'SVG Cafe',
+            detailSubtitle: 'Rasterized before native display',
+            detailSummary: 'Point-of-interest template image example',
+            image: 'images/svg_poi.svg',
+          ),
+          CPPointOfInterest(
+            latitude: 51.5074,
+            longitude: 7.4970,
+            title: 'SVG Warning Zone',
+            subtitle: 'Warning marker SVG',
+            summary: 'Uses images/svg_warning.svg',
+            detailTitle: 'SVG Warning Zone',
+            detailSubtitle: 'Rasterized before native display',
+            detailSummary: 'Second point-of-interest SVG example',
+            image: 'images/svg_warning.svg',
+          ),
+        ],
       ),
     );
   }
@@ -819,6 +1026,18 @@ class _MyAppState extends State<MyApp> {
                   ),
                   onPressed: () => openGridTemplate(),
                   child: const Text('Open Grid\nTemplate'),
+                ),
+                const SizedBox(width: 20),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    textStyle: const TextStyle(fontSize: 15),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: 24,
+                    ),
+                  ),
+                  onPressed: () => openSvgExamplesTemplate(),
+                  child: const Text('Open SVG\nExamples'),
                 ),
               ],
             ),

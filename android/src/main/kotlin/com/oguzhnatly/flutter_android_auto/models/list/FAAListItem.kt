@@ -5,6 +5,7 @@ data class FAAListItem(
     val title: String,
     val subtitle: String? = null,
     val imageUrl: String? = null,
+    val imageData: ByteArray? = null,
     val isBrowsable: Boolean? = null,
     val toggle: FAAToggle? = null,
     val isOnPressListenerActive: Boolean,
@@ -15,6 +16,7 @@ data class FAAListItem(
             val title = map["title"] as? String ?: ""
             val subtitle = map["subtitle"] as? String
             val imageUrl = map["imageUrl"] as? String
+            val imageData = map["imageData"] as? ByteArray
             val isBrowsable = map["isBrowsable"] as? Boolean
             val toggle = (map["toggle"] as? Map<*, *>)?.mapKeys { entry ->
                 entry.key.toString()
@@ -22,7 +24,14 @@ data class FAAListItem(
             val isOnPressListenerActive = map["onPress"] as? Boolean ?: false
 
             return FAAListItem(
-                elementId, title, subtitle, imageUrl, isBrowsable, toggle, isOnPressListenerActive
+                elementId,
+                title,
+                subtitle,
+                imageUrl,
+                imageData,
+                isBrowsable,
+                toggle,
+                isOnPressListenerActive
             )
         }
     }

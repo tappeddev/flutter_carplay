@@ -1,6 +1,5 @@
 package com.oguzhnatly.flutter_android_auto
 
-import androidx.car.app.CarContext
 import androidx.car.app.model.Action
 import androidx.car.app.model.CarIcon
 import androidx.car.app.model.CarText
@@ -389,8 +388,12 @@ class FlutterAndroidAutoPlugin : FlutterPlugin, EventChannel.StreamHandler {
 
         item.subtitle?.let { rowBuilder.addText(CarText.create(it)) }
 
-        item.imageUrl?.let {
-            loadCarImageAsync(it)?.let { carIcon ->
+        val carContext = AndroidAutoService.session?.carContext
+        val imageIcon = makeCarIconFromBytes(item.imageData)
+        if (imageIcon != null) {
+            rowBuilder.setImage(imageIcon)
+        } else if (carContext != null && item.imageUrl != null) {
+            resolveCarIcon(carContext, null, item.imageUrl)?.let { carIcon ->
                 rowBuilder.setImage(carIcon)
             }
         }
