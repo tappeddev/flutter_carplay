@@ -360,7 +360,7 @@ class FlutterAndroidAutoPlugin : FlutterPlugin, EventChannel.StreamHandler {
 
         val title = call.argument<String>("title") ?: ""
         val message = call.argument<String>("message") ?: ""
-        val isRootTemplate = templateElementId == currentTemplateElementId
+        val isRootTemplate = templateElementId == currentRootTemplateElementId
         val updatedTemplate = buildTemplate(
             mapOf(
                 "_elementId" to templateElementId,
