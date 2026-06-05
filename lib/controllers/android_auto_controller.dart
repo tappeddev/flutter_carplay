@@ -60,6 +60,33 @@ class FlutterAndroidAutoController {
     return value;
   }
 
+  static Future<void> updateAAListTemplateSections({
+    required String elementId,
+    required List<AAListSection> sections,
+  }) async {
+    final payload = <String, dynamic>{
+      'elementId': elementId,
+      'sections':
+          sections.map((AAListSection section) => section.toJson()).toList(),
+    };
+
+    await resolveSvgInPayload(payload, size: FlutterAndroidAuto.svgRasterSize);
+
+    final bool? isCompleted = await _methodChannel.invokeMethod<bool>(
+      FAAChannelTypes.updateListTemplateSections.name,
+      payload,
+    );
+
+    if (isCompleted == true) {
+      for (final template in templateHistory) {
+        if (template is AAListTemplate && template.uniqueId == elementId) {
+          template.updateSections(sections);
+          return;
+        }
+      }
+    }
+  }
+
   /* static void updateCPListItem(CPListItem updatedListItem) {
     _methodChannel.invokeMethod('updateListItem', <String, dynamic>{
       ...updatedListItem.toJson(),
@@ -103,29 +130,6 @@ class FlutterAndroidAutoController {
       }
     });
   }*/
-
-  static Future<void> updateAAListTemplateSections({
-    required String elementId,
-    required List<AAListSection> sections,
-  }) async {
-    final bool? isCompleted = await flutterToNativeModuleStatic(
-      FAAChannelTypes.updateListTemplateSections,
-      <String, dynamic>{
-        'elementId': elementId,
-        'sections':
-            sections.map((AAListSection section) => section.toJson()).toList(),
-      },
-    );
-
-    if (isCompleted == true) {
-      for (final template in templateHistory) {
-        if (template is AAListTemplate && template.uniqueId == elementId) {
-          template.updateSections(sections);
-          return;
-        }
-      }
-    }
-  }
 
   void processFAAListItemSelectedChannel(String elementId) {
     final AAListItem? listItem = _androidAutoHelper.findAAListItem(
