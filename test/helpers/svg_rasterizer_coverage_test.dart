@@ -10,10 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 /// model instances and asserts every image-like key they emit is accounted for.
 void main() {
   /// Keys known to the walker (rasterized or deliberately ignored).
-  final knownKeys = <String>{
-    ...svgImageDataKeys.keys,
-    ...svgIgnoredKeys,
-  };
+  final knownKeys = <String>{...svgImageDataKeys.keys, ...svgIgnoredKeys};
 
   /// All sibling data keys the walker can write, which must never be flagged as
   /// unhandled image keys themselves.
@@ -64,23 +61,26 @@ void main() {
   group('SVG walker key coverage', () {
     test('svgImageDataKeys and svgIgnoredKeys do not overlap', () {
       expect(
-          svgImageDataKeys.keys.toSet().intersection(svgIgnoredKeys), isEmpty);
+        svgImageDataKeys.keys.toSet().intersection(svgIgnoredKeys),
+        isEmpty,
+      );
     });
 
     test('CPListItem image key is handled', () {
       expectAllImageKeysHandled(
         'CPListItem',
-        CPListItem(text: 'a', image: 'images/icon.svg').toJson(),
+        CPListItem(
+          text: 'a',
+          image: 'images/icon.svg',
+          trailingImage: 'images/check.svg',
+        ).toJson(),
       );
     });
 
     test('CPGridButton image key is handled', () {
       expectAllImageKeysHandled(
         'CPGridButton',
-        CPGridButton(
-          titleVariants: ['a'],
-          image: 'images/icon.svg',
-        ).toJson(),
+        CPGridButton(titleVariants: ['a'], image: 'images/icon.svg').toJson(),
       );
     });
 
@@ -109,7 +109,25 @@ void main() {
     test('AAListItem imageUrl key is handled', () {
       expectAllImageKeysHandled(
         'AAListItem',
-        AAListItem(title: 'a', imageUrl: 'images/icon.svg').toJson(),
+        AAListItem(
+          title: 'a',
+          imageUrl: 'images/icon.svg',
+          trailingImage: 'images/check.svg',
+        ).toJson(),
+      );
+    });
+
+    test('AAPaneTemplate imageUrl keys are handled', () {
+      expectAllImageKeysHandled(
+        'AAPaneTemplate',
+        AAPaneTemplate(
+          title: 'Info',
+          imageUrl: 'images/icon.svg',
+          items: [AAPaneItem(title: 'a', imageUrl: 'images/icon.svg')],
+          actions: [
+            AAPaneAction(title: 'Refresh', imageUrl: 'images/icon.svg'),
+          ],
+        ).toJson(),
       );
     });
 
@@ -120,7 +138,11 @@ void main() {
             sections: [
               CPListSection(
                 items: [
-                  CPListItem(text: 'a', image: 'images/icon.svg'),
+                  CPListItem(
+                    text: 'a',
+                    image: 'images/icon.svg',
+                    trailingImage: 'images/check.svg',
+                  ),
                   CPListImageRowItem(
                     text: 'b',
                     gridImages: const ['images/icon.svg'],
@@ -132,10 +154,7 @@ void main() {
           CPGridTemplate(
             title: 'grid',
             buttons: [
-              CPGridButton(
-                titleVariants: ['x'],
-                image: 'images/icon.svg',
-              ),
+              CPGridButton(titleVariants: ['x'], image: 'images/icon.svg'),
             ],
           ),
         ],

@@ -4,6 +4,7 @@ import 'package:flutter_carplay/constants/private_constants.dart';
 import '../aa_models/list/list_item.dart';
 import '../aa_models/list/list_section.dart';
 import '../aa_models/list/list_template.dart';
+import '../aa_models/pane/pane_action.dart';
 import '../aa_models/template.dart';
 import '../android_auto_worker.dart';
 import '../helpers/auto_android_helper.dart';
@@ -177,6 +178,14 @@ class FlutterAndroidAutoController {
         toggle.onCheckedChange?.call(checked, listItem);
       }
     }
+  }
+
+  void processFAAPaneActionPressedChannel(String elementId) {
+    final AAPaneAction? paneAction = _androidAutoHelper.findAAPaneAction(
+      templates: templateHistory,
+      elementId: elementId,
+    );
+    paneAction?.onPress?.call();
   }
 
   /*void processFAAAlertActionPressed(String elementId) {

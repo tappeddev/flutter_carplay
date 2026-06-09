@@ -77,6 +77,11 @@ class FlutterAndroidAuto {
             event['data']['checked'],
           );
           break;
+        case FAAChannelTypes.onPaneActionPressed:
+          _androidAutoController.processFAAPaneActionPressedChannel(
+            event['data']['elementId'],
+          );
+          break;
         case FAAChannelTypes.onScreenBackButtonPressed:
           FlutterAndroidAutoController.templateHistory.removeWhere(
             (AATemplate item) => item.uniqueId == event['data']['elementId'],
@@ -161,6 +166,32 @@ class FlutterAndroidAuto {
     return _androidAutoController.flutterToNativeModule(
       FAAChannelTypes.forceUpdateRootTemplate,
     );
+  }
+
+  /// Updates an existing [AAPaneTemplate] and invalidates its Android Auto
+  /// screen so the host requests the new pane content.
+  ///
+  /// Android panes must be either loading with no rows, or not loading with at
+  /// least one row. A transition from loading to loaded content is treated by
+  /// Android as a template refresh. A transition from already-loaded content
+  /// back to loading changes the row count, so Android may count it against the
+  /// template quota.
+  Future<bool> updatePaneTemplate({required AAPaneTemplate template}) async {
+    final bool? isCompleted = await _androidAutoController
+        .flutterToNativeModule(FAAChannelTypes.updatePaneTemplate, {
+      'template': template.toJson(),
+    });
+
+    if (isCompleted == true) {
+      final int index = FlutterAndroidAutoController.templateHistory.indexWhere(
+        (AATemplate item) => item.uniqueId == template.uniqueId,
+      );
+      if (index != -1) {
+        FlutterAndroidAutoController.templateHistory[index] = template;
+      }
+    }
+
+    return isCompleted ?? false;
   }
 
   /// Getter for current root template.
@@ -274,6 +305,7 @@ class FlutterAndroidAuto {
     if (template is AAListTemplate) return 'FAAListTemplate';
     if (template is AAMessageTemplate) return 'FAAMessageTemplate';
     if (template is AALongMessageTemplate) return 'FAALongMessageTemplate';
+    if (template is AAPaneTemplate) return 'FAAPaneTemplate';
     return 'FAA${template.runtimeType}';
   }
 }
