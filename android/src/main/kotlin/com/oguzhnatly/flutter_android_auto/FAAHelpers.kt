@@ -25,11 +25,7 @@ object FAAHelpers {
  * bytes are empty or cannot be decoded so callers can fall back to other
  * resolution strategies.
  */
-fun makeCarIconFromBytes(bytes: ByteArray?): CarIcon? {
-    return makeCarIconFromBytes(bytes, null)
-}
-
-fun makeCarIconFromBytes(bytes: ByteArray?, imageTint: FAAImageTint?): CarIcon? {
+fun makeCarIconFromBytes(bytes: ByteArray?, imageTint: FAAImageTint? = null): CarIcon? {
     if (bytes == null || bytes.isEmpty()) return null
     return try {
         val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size) ?: return null
