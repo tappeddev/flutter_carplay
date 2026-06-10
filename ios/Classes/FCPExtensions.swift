@@ -14,9 +14,14 @@ private let fcpTintedImageCache = NSCache<NSString, UIImage>()
 // Used for Flutter asset SVGs that are rasterized to PNG on the Dart side,
 // since UIImage cannot decode SVG directly. Returns nil when the data is
 // missing or cannot be decoded so callers can fall back to string resolution.
+//
+// SVGs are rasterized at 120 px (defaultSvgRasterSize); target CarPlay display
+// size is 40 pt. Passing scale = 120/40 = 3 re-interprets pixel density so the
+// image reports itself as 40 pt without resampling.
 func makeUIImage(fromBytes data: FlutterStandardTypedData?) -> UIImage? {
   guard let data = data else { return nil }
-  return UIImage(data: data.data)
+  let targetPt: CGFloat = 40
+  return UIImage(data: data.data, scale: 120 / targetPt)
 }
 
 @available(iOS 14.0, *)
