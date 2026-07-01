@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 
 import '../template.dart';
@@ -34,6 +35,12 @@ class AAAlertTemplate implements AATemplate {
     this.onPresent,
     String? id,
   }) : _elementId = id ?? const Uuid().v4();
+
+  /// Alerts are modal and use [onPresent] for their lifecycle, so they are
+  /// never popped from the navigation stack. Always null to satisfy
+  /// [AATemplate].
+  @override
+  VoidCallback? get onPop => null;
 
   @override
   String get uniqueId => _elementId;

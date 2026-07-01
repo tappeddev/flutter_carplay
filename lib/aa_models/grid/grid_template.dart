@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 
 import '../template.dart';
@@ -41,6 +42,9 @@ class AAGridTemplate implements AATemplate {
   /// Takes precedence over [systemIcon] when both are set.
   final String? iconUrl;
 
+  @override
+  final VoidCallback? onPop;
+
   AAGridTemplate({
     required this.title,
     required this.buttons,
@@ -48,6 +52,7 @@ class AAGridTemplate implements AATemplate {
     this.tabTitle,
     this.systemIcon,
     this.iconUrl,
+    this.onPop,
   }) : _elementId = const Uuid().v4();
 
   @override

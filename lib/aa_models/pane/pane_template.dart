@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_carplay/models/common/image_tint.dart';
 import 'package:uuid/uuid.dart';
 
@@ -30,6 +31,9 @@ class AAPaneTemplate implements AATemplate {
   /// count, so it may count as a new template in Android Auto's template quota.
   final bool isLoading;
 
+  @override
+  final VoidCallback? onPop;
+
   AAPaneTemplate({
     required this.title,
     required this.items,
@@ -37,6 +41,7 @@ class AAPaneTemplate implements AATemplate {
     this.imageUrl,
     this.imageTint,
     this.isLoading = false,
+    this.onPop,
     String? id,
   })  : assert(title.isNotEmpty, 'AAPaneTemplate.title cannot be empty'),
         assert(
