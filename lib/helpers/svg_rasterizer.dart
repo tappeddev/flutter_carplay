@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:ui' as ui;
 
@@ -12,6 +13,19 @@ import 'package:flutter_svg/flutter_svg.dart';
 /// [FlutterAndroidAuto.svgRasterSize], which are forwarded to
 /// [resolveSvgInPayload].
 const defaultSvgRasterSize = 120;
+
+/// Maximum time a single SVG rasterization may run before it is abandoned and
+/// treated as a failure (returns `null`).
+///
+/// [ui.Picture.toImage] never completes without a live rendering pipeline, so in
+/// headless / integration-test environments `_rasterize` would otherwise hang
+/// forever, blocking the method-channel payload walk. Bounding it lets the
+/// presentation layer degrade gracefully — the SVG is dropped (the original asset
+/// string is preserved for native fallback) instead of stalling.
+///
+/// Overridable in tests.
+@visibleForTesting
+Duration svgRasterizeTimeout = const Duration(seconds: 2);
 
 /// In-memory cache of rasterized SVG assets keyed by `assetPath|size`.
 final _svgRasterCache = <String, Uint8List>{};
@@ -104,7 +118,8 @@ Future<Uint8List?> _rasterize(
       canvas.drawPicture(pictureInfo.picture);
 
       final rendered = recorder.endRecording();
-      final image = await rendered.toImage(size, size);
+      final image =
+          await rendered.toImage(size, size).timeout(svgRasterizeTimeout);
       try {
         final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
         if (byteData == null) return null;
@@ -118,6 +133,10 @@ Future<Uint8List?> _rasterize(
     } finally {
       pictureInfo.picture.dispose();
     }
+  } on TimeoutException {
+    // Without a live rendering pipeline (e.g. headless integration tests)
+    // ui.Picture.toImage() never completes. Degrade to null instead of hanging.
+    return null;
   } catch (error, stackTrace) {
     debugPrint('flutter_carplay: failed to rasterize SVG "$assetPath": $error');
     debugPrintStack(stackTrace: stackTrace);
