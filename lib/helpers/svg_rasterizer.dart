@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:ui' as ui;
 
@@ -17,8 +16,9 @@ const defaultSvgRasterSize = 120;
 /// Maximum time a single SVG rasterization may run before it is abandoned and
 /// treated as a failure (returns `null`).
 ///
-/// [ui.Picture.toImage] never completes without a live rendering pipeline, so in
-/// headless / integration-test environments `_rasterize` would otherwise hang
+/// This bounds the *whole* pipeline — asset load, SVG decode and
+/// [ui.Picture.toImage] — because without a live rendering pipeline (e.g. in
+/// headless / integration-test environments) any of these stages can hang
 /// forever, blocking the method-channel payload walk. Bounding it lets the
 /// presentation layer degrade gracefully — the SVG is dropped (the original asset
 /// string is preserved for native fallback) instead of stalling.
@@ -72,7 +72,12 @@ Future<Uint8List?> rasterizeSvgAsset(
   final inflight = _svgRasterInflight[cacheKey];
   if (inflight != null) return inflight;
 
-  final operation = _rasterize(assetPath, size, cacheKey);
+  // Bound the *entire* rasterization (asset load + SVG decode + toImage), not
+  // just the toImage() call: without a live rendering pipeline any of these
+  // stages can hang forever, and the hang is typically at the load/decode stage
+  // rather than toImage(). On timeout, degrade to null instead of blocking.
+  final operation = _rasterize(assetPath, size, cacheKey)
+      .timeout(svgRasterizeTimeout, onTimeout: () => null);
   _svgRasterInflight[cacheKey] = operation;
   return operation.whenComplete(() => _svgRasterInflight.remove(cacheKey));
 }
@@ -118,8 +123,7 @@ Future<Uint8List?> _rasterize(
       canvas.drawPicture(pictureInfo.picture);
 
       final rendered = recorder.endRecording();
-      final image =
-          await rendered.toImage(size, size).timeout(svgRasterizeTimeout);
+      final image = await rendered.toImage(size, size);
       try {
         final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
         if (byteData == null) return null;
@@ -133,10 +137,6 @@ Future<Uint8List?> _rasterize(
     } finally {
       pictureInfo.picture.dispose();
     }
-  } on TimeoutException {
-    // Without a live rendering pipeline (e.g. headless integration tests)
-    // ui.Picture.toImage() never completes. Degrade to null instead of hanging.
-    return null;
   } catch (error, stackTrace) {
     debugPrint('flutter_carplay: failed to rasterize SVG "$assetPath": $error');
     debugPrintStack(stackTrace: stackTrace);
