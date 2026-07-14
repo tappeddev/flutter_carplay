@@ -40,12 +40,11 @@ class FCPGridButton {
     }
 
     if let bytesImage = bytesImage {
-      image = bytesImage.applyingImageTint(imageTint ?? .platformDefault)
+      image = bytesImage.applyingImageTint(imageTint)
     } else if #available(iOS 26.0, *) {
       image = makeSafeUIPlaceholder()
     } else {
-      image = normalizedIconImage(makeUIImage(from: imageSource))
-        .applyingImageTint(imageTint ?? .platformDefault)
+      image = normalizedIconImage(makeUIImage(from: imageSource)).applyingImageTint(imageTint)
     }
 
     gridButton = CPGridButton(

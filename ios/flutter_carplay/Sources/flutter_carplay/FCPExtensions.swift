@@ -48,11 +48,7 @@ func loadUIImage(
   tint imageTint: FCPImageTint? = nil,
   completion: @escaping (UIImage) -> Void
 ) {
-  // Untinted list/grid icons default to an adaptive label tint so monochrome
-  // glyphs stay crisp instead of rendering as a dim grey CarPlay template.
-  let effectiveTint = imageTint ?? .platformDefault
-  let cacheKey = makeTintedImageCacheKey(
-    imagePath: imagePath, imageData: imageData, tint: effectiveTint)
+  let cacheKey = makeTintedImageCacheKey(imagePath: imagePath, imageData: imageData, tint: imageTint)
   if let cacheKey = cacheKey,
     let cachedImage = fcpTintedImageCache.object(forKey: cacheKey as NSString)
   {
@@ -61,7 +57,7 @@ func loadUIImage(
   }
 
   func complete(_ image: UIImage) {
-    let result = normalizedIconImage(image).applyingImageTint(effectiveTint)
+    let result = normalizedIconImage(image).applyingImageTint(imageTint)
     if let cacheKey = cacheKey {
       fcpTintedImageCache.setObject(result, forKey: cacheKey as NSString)
     }

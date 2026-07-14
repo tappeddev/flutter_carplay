@@ -7,24 +7,6 @@ struct FCPImageTint: Equatable {
   let selectedSafe: Bool
   let cacheKey: String
 
-  init(type: String, color: UIColor? = nil, darkColor: UIColor? = nil, selectedSafe: Bool = true) {
-    self.type = type
-    self.color = color
-    self.darkColor = darkColor
-    self.selectedSafe = selectedSafe
-    self.cacheKey = [
-      type,
-      FCPImageTint.colorKey(color),
-      FCPImageTint.colorKey(darkColor),
-      String(selectedSafe),
-    ].joined(separator: "|")
-  }
-
-  /// Adaptive default applied to CarPlay list/grid icons when the caller sets no
-  /// explicit tint: resolves to `UIColor.label` (white on dark, black on light)
-  /// so monochrome glyphs stay crisp instead of rendering as a dim grey template.
-  static let platformDefault = FCPImageTint(type: "platform")
-
   init?(from dict: [String: Any]?) {
     guard let dict = dict, let type = dict["type"] as? String else { return nil }
     self.type = type
