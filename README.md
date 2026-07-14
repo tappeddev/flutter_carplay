@@ -10,7 +10,7 @@
 
 Flutter Apps now on Apple CarPlay and Android Auto ! `flutter_carplay` aims to make it safe to use apps made with Flutter in the car by integrating with CarPlay and Android Auto. The package takes the things you want to do while driving and puts them on the car's built-in display.
 
-**✨ New in v1.4.0**: CarPlay search templates, Android Auto message, long message, and pane templates, richer Android Auto lists, and Flutter asset SVG image support.
+**✨ New in v1.5.0**: Android Auto alert, grid, and tab bar templates, modal alert APIs, and richer Android Auto list loading states.
 
 **✨ New in v1.1.0**: CarPlay apps can now launch automatically without requiring the Flutter app to be opened first, supporting true background launch capabilities.
 
@@ -101,6 +101,12 @@ By evaluating this information, you can request for the relevant entitlement fro
 
 # What's New in latest versions
 
+## v1.5.0
+
+- **🚘 More Android Auto Templates**: Added alert, grid, and tab bar templates, including tab selection handling
+- **⚠️ Android Auto Alerts**: Added modal alert presentation and dismissal APIs for Android Auto flows
+- **🧾 Better Android Auto Lists**: Added loading messages and empty view title support for list templates
+
 ## v1.4.0
 
 - **🔎 CarPlay Search Template**: Added `CPSearchTemplate` with search text, result selection, and search button callbacks
@@ -175,6 +181,8 @@ Whether you are running the app through a simulator or developing it for distrib
 After you receive the entitlement, you need to configure your Xcode project to use it, which involves several steps. You create and import a provisioning profile, and add an `Entitlements.plist` file. Your project’s code signing settings also require minor changes.
 
 For more detailed instructions about how to create and import the CarPlay Provisioning Profile and add an Entitlements File to Xcode Project, go to [Configure your CarPlay-enabled app with the entitlements it requires.](https://developer.apple.com/documentation/carplay/requesting_the_carplay_entitlements)
+
+Choose the CarPlay entitlement that matches the app category Apple approved for your project. The example app keeps `com.apple.developer.carplay-parking` so the Point of Interest demo remains available. If your app uses a different CarPlay category, replace it with the matching entitlement, for example `com.apple.developer.carplay-maps` for maps and navigation, `com.apple.developer.carplay-quick-ordering` for quick ordering, `com.apple.developer.carplay-charging` for EV charging, `com.apple.developer.carplay-fueling` for fuel stations, `com.apple.developer.carplay-driving-task` for driving tasks, `com.apple.developer.carplay-communication` for calling or messaging, or `com.apple.developer.carplay-audio` for audio playback.
 
 # Disclaimer Before The Installation
 
@@ -356,37 +364,6 @@ Inside the `<application>` tag:
 
 For others use, please check official [Android Auto documentation](https://developer.android.com/training/cars/apps/auto).
 
-### Android Auto Message Template
-
-Use `AAMessageTemplate` for simple empty states, errors, or informational screens.
-
-```dart
-final template = AAMessageTemplate(
-  title: 'No saved places',
-  message: 'Save places on your phone to access them here.',
-);
-
-await FlutterAndroidAuto.setRootTemplate(template: template);
-
-await template.update(
-  title: 'Saved places synced',
-  message: 'Your saved places are now available in Android Auto.',
-);
-```
-
-Use `AALongMessageTemplate` for longer informational text that needs more room
-than a simple message template.
-
-```dart
-final template = AALongMessageTemplate(
-  title: 'Safety information',
-  message: 'Keep your attention on the road. This longer Android Auto message '
-      'template is intended for content that needs more space.',
-);
-
-await FlutterAndroidAuto.push(template: template);
-```
-
 4. In your `MainActivity.kt` file, make the necessary to resuse and cache the engine as follow :
 
 On Android Auto Service, use the same engine as the app if the app is already running, otherwise create a new one and cache using the id `FAAConstants.flutterEngineId`.
@@ -556,6 +533,37 @@ Updates an existing `AAPaneTemplate` and invalidates its Android Auto screen.
 await FlutterAndroidAuto.updatePaneTemplate(template: paneTemplate);
 ```
 
+### Android Auto Message Template
+
+Use `AAMessageTemplate` for simple empty states, errors, or informational screens.
+
+```dart
+final template = AAMessageTemplate(
+  title: 'No saved places',
+  message: 'Save places on your phone to access them here.',
+);
+
+await FlutterAndroidAuto.setRootTemplate(template: template);
+
+await template.update(
+  title: 'Saved places synced',
+  message: 'Your saved places are now available in Android Auto.',
+);
+```
+
+Use `AALongMessageTemplate` for longer informational text that needs more room
+than a simple message template.
+
+```dart
+final template = AALongMessageTemplate(
+  title: 'Safety information',
+  message: 'Keep your attention on the road. This longer Android Auto message '
+      'template is intended for content that needs more space.',
+);
+
+await FlutterAndroidAuto.push(template: template);
+```
+
 ### Android Auto Pane Template
 
 Use `AAPaneTemplate` for compact informational screens on Android Auto. It maps to Android's native `PaneTemplate` and is the closest Android equivalent for CarPlay-style information screens.
@@ -642,7 +650,9 @@ _flutterCarplay.forceUpdateRootTemplate();
 
 ### CarPlay Search Template
 
-Use `CPSearchTemplate` when your CarPlay app needs a native search screen. Return result rows from `onUpdatedSearchText`, handle row selection in `onSelectedResult`, and call the provided completion callback after your app finishes handling the selected result.
+![Flutter CarPlay Search Template](https://raw.githubusercontent.com/oguzhnatly/flutter_carplay/master/previews/search_template.png)
+
+Use `CPSearchTemplate` when your CarPlay app needs a native search screen. Your app's CarPlay entitlement controls which templates are available for its approved category. The example app keeps the parking entitlement for Point of Interest support; switch the entitlement in your app target if Apple approved a different category. Return result rows from `onUpdatedSearchText`, handle row selection in `onSelectedResult`, and call the provided completion callback after your app finishes handling the selected result.
 
 ```dart
 await FlutterCarplay.push(
