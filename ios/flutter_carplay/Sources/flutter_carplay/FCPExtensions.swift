@@ -10,18 +10,21 @@ import UIKit
 
 private let fcpTintedImageCache = NSCache<NSString, UIImage>()
 
+// Target CarPlay display size (points) for list/grid icons. Shared by the SVG
+// byte path and the file/asset/URL normalization so both render at the same size.
+let fcpIconTargetPt: CGFloat = 32
+
 // Creates a UIImage from raw PNG bytes sent over the MethodChannel.
 // Used for Flutter asset SVGs that are rasterized to PNG on the Dart side,
 // since UIImage cannot decode SVG directly. Returns nil when the data is
 // missing or cannot be decoded so callers can fall back to string resolution.
 //
-// SVGs are rasterized at 120 px (defaultSvgRasterSize); target CarPlay display
-// size is 40 pt. Passing scale = 120/40 = 3 re-interprets pixel density so the
-// image reports itself as 40 pt without resampling.
+// SVGs are rasterized at 120 px (defaultSvgRasterSize); passing
+// scale = 120 / fcpIconTargetPt re-interprets pixel density so the image reports
+// itself as fcpIconTargetPt points without resampling.
 func makeUIImage(fromBytes data: FlutterStandardTypedData?) -> UIImage? {
   guard let data = data else { return nil }
-  let targetPt: CGFloat = 40
-  return UIImage(data: data.data, scale: 120 / targetPt)
+  return UIImage(data: data.data, scale: 120 / fcpIconTargetPt)
 }
 
 // Re-tags an image's scale so its larger dimension renders at `targetPt` points,
@@ -29,7 +32,7 @@ func makeUIImage(fromBytes data: FlutterStandardTypedData?) -> UIImage? {
 // Only shrinks oversized icons; small icons are returned unchanged so they are
 // never upscaled. Fixes file/asset/URL images that decode at scale 1.0 and would
 // otherwise hand their full pixel dimensions to CarPlay as point dimensions.
-func normalizedIconImage(_ image: UIImage, targetPt: CGFloat = 40) -> UIImage {
+func normalizedIconImage(_ image: UIImage, targetPt: CGFloat = fcpIconTargetPt) -> UIImage {
   guard let cg = image.cgImage else { return image }
   let maxPixels = max(CGFloat(cg.width), CGFloat(cg.height))
   guard maxPixels > 0 else { return image }
@@ -45,7 +48,11 @@ func loadUIImage(
   tint imageTint: FCPImageTint? = nil,
   completion: @escaping (UIImage) -> Void
 ) {
-  let cacheKey = makeTintedImageCacheKey(imagePath: imagePath, imageData: imageData, tint: imageTint)
+  // Untinted list/grid icons default to an adaptive label tint so monochrome
+  // glyphs stay crisp instead of rendering as a dim grey CarPlay template.
+  let effectiveTint = imageTint ?? .platformDefault
+  let cacheKey = makeTintedImageCacheKey(
+    imagePath: imagePath, imageData: imageData, tint: effectiveTint)
   if let cacheKey = cacheKey,
     let cachedImage = fcpTintedImageCache.object(forKey: cacheKey as NSString)
   {
@@ -54,7 +61,7 @@ func loadUIImage(
   }
 
   func complete(_ image: UIImage) {
-    let result = normalizedIconImage(image).applyingImageTint(imageTint)
+    let result = normalizedIconImage(image).applyingImageTint(effectiveTint)
     if let cacheKey = cacheKey {
       fcpTintedImageCache.setObject(result, forKey: cacheKey as NSString)
     }
