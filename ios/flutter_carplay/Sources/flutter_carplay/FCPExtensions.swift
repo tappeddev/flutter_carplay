@@ -24,6 +24,20 @@ func makeUIImage(fromBytes data: FlutterStandardTypedData?) -> UIImage? {
   return UIImage(data: data.data, scale: 120 / targetPt)
 }
 
+// Re-tags an image's scale so its larger dimension renders at `targetPt` points,
+// aspect-preserving and without resampling (same trick as makeUIImage(fromBytes:)).
+// Only shrinks oversized icons; small icons are returned unchanged so they are
+// never upscaled. Fixes file/asset/URL images that decode at scale 1.0 and would
+// otherwise hand their full pixel dimensions to CarPlay as point dimensions.
+func normalizedIconImage(_ image: UIImage, targetPt: CGFloat = 40) -> UIImage {
+  guard let cg = image.cgImage else { return image }
+  let maxPixels = max(CGFloat(cg.width), CGFloat(cg.height))
+  guard maxPixels > 0 else { return image }
+  let neededScale = maxPixels / targetPt
+  guard neededScale > image.scale else { return image }
+  return UIImage(cgImage: cg, scale: neededScale, orientation: image.imageOrientation)
+}
+
 @available(iOS 14.0, *)
 func loadUIImage(
   from imagePath: String,
@@ -40,7 +54,7 @@ func loadUIImage(
   }
 
   func complete(_ image: UIImage) {
-    let result = image.applyingImageTint(imageTint)
+    let result = normalizedIconImage(image).applyingImageTint(imageTint)
     if let cacheKey = cacheKey {
       fcpTintedImageCache.setObject(result, forKey: cacheKey as NSString)
     }
@@ -242,7 +256,7 @@ extension UIImage {
   }
 
   func applyingImageTint(_ tint: FCPImageTint?) -> UIImage {
-    guard let tint = tint else { return self }
+    guard let tint = tint else { return self.withRenderingMode(.alwaysOriginal) }
 
     let lightTrait = UITraitCollection(userInterfaceStyle: .light)
     let darkTrait = UITraitCollection(userInterfaceStyle: .dark)

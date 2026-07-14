@@ -1,4 +1,37 @@
-## Next
+## 1.6.4 - 2026-07-06
+
+- Move the Android Auto message template docs into the Android Auto API usage section (#129) (ty @EArminjon)
+
+## 1.6.3 - 2026-06-22
+
+- Fix Android Auto example release launches by allowing root template refresh before the car screen is attached (#127, #128) (ty @deandreamatias)
+- Keep the Android Auto selectable list demo in its own template so it follows host validation rules (#128)
+
+## 1.6.2 - 2026-06-16
+
+- Support setting `CPSearchTemplate` as the CarPlay root template.
+- Add a Search Template row to the example app and a README preview image.
+- Document CarPlay entitlement options while keeping parking as the example default for Point of Interest support.
+
+## 1.6.1 - 2026-06-15
+
+- Fix Swift Package Manager builds by keeping `FCPSearchTemplate.swift` inside the SwiftPM source path (#123, #124) (ty @Gabriellsp)
+- Reject unsupported `CPSearchTemplate` root templates before CarPlay receives an invalid root template.
+
+## 1.6.0 - 2026-06-13
+
+- Add Swift Package Manager support for iOS package consumers (#111) (ty @justinbeatz)
+- Keep `FCPImageTint.swift` in the SwiftPM source path and align CocoaPods source files with the new package layout (#111) (ty @justinbeatz)
+
+## 1.5.1
+
+- Fix CarPlay tab templates when the same list item ID appears in multiple tabs (#121) (ty @Gabriellsp)
+
+## 1.5.0
+
+- Add Android Auto alert, grid, and tab bar templates (#102) (ty @Gabriellsp)
+- Add Android Auto modal alert presentation and dismissal APIs (#102) (ty @Gabriellsp)
+- Add Android Auto list loading messages and empty view titles (#102) (ty @Gabriellsp)
 
 ## 1.4.0
 
