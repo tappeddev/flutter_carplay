@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 
 import '../grid/grid_template.dart';
@@ -22,8 +23,12 @@ class AATabBarTemplate implements AATemplate {
   /// The templates shown in each tab (max 5, per Android Auto restrictions).
   final List<AATemplate> tabs;
 
+  @override
+  final VoidCallback? onPop;
+
   AATabBarTemplate({
     required List<AATemplate> tabs,
+    this.onPop,
     String? id,
   })  : tabs = List<AATemplate>.from(tabs),
         _elementId = id ?? const Uuid().v4();

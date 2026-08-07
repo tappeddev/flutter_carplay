@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_carplay/controllers/android_auto_controller.dart';
 import 'package:uuid/uuid.dart';
 
@@ -11,9 +12,13 @@ abstract class AAMessageTemplateBase implements AATemplate {
   String title;
   String message;
 
+  @override
+  final VoidCallback? onPop;
+
   AAMessageTemplateBase({
     required this.title,
     required this.message,
+    this.onPop,
     String? id,
   }) : _elementId = id ?? const Uuid().v4() {
     _validateMessage(message);

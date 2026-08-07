@@ -70,8 +70,14 @@ class FlutterAndroidAuto {
           break;
 
         case FAAChannelTypes.onScreenBackButtonPressed:
+          final String elementId = event['data']['elementId'];
+          final AATemplate? poppedTemplate = FlutterAndroidAutoController
+              .templateHistory
+              .where((AATemplate item) => item.uniqueId == elementId)
+              .firstOrNull;
+          poppedTemplate?.onPop?.call();
           FlutterAndroidAutoController.templateHistory.removeWhere(
-            (AATemplate item) => item.uniqueId == event['data']['elementId'],
+            (AATemplate item) => item.uniqueId == elementId,
           );
           break;
 

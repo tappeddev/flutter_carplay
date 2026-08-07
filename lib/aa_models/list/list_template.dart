@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 
 import '../template.dart';
@@ -32,6 +33,9 @@ class AAListTemplate implements AATemplate {
   /// Takes precedence over [systemIcon] when set.
   final String? iconUrl;
 
+  @override
+  final VoidCallback? onPop;
+
   AAListTemplate({
     required this.title,
     required this.sections,
@@ -39,6 +43,7 @@ class AAListTemplate implements AATemplate {
     this.tabTitle,
     this.systemIcon,
     this.iconUrl,
+    this.onPop,
     String? id,
   })  : assert(
           !sections.any((section) => section.isSelectable) ||

@@ -10,13 +10,35 @@ import UIKit
 
 private let fcpTintedImageCache = NSCache<NSString, UIImage>()
 
+// Target CarPlay display size (points) for list/grid icons. Shared by the SVG
+// byte path and the file/asset/URL normalization so both render at the same size.
+let fcpIconTargetPt: CGFloat = 32
+
 // Creates a UIImage from raw PNG bytes sent over the MethodChannel.
 // Used for Flutter asset SVGs that are rasterized to PNG on the Dart side,
 // since UIImage cannot decode SVG directly. Returns nil when the data is
 // missing or cannot be decoded so callers can fall back to string resolution.
+//
+// SVGs are rasterized at 120 px (defaultSvgRasterSize); passing
+// scale = 120 / fcpIconTargetPt re-interprets pixel density so the image reports
+// itself as fcpIconTargetPt points without resampling.
 func makeUIImage(fromBytes data: FlutterStandardTypedData?) -> UIImage? {
   guard let data = data else { return nil }
-  return UIImage(data: data.data)
+  return UIImage(data: data.data, scale: 120 / fcpIconTargetPt)
+}
+
+// Re-tags an image's scale so its larger dimension renders at `targetPt` points,
+// aspect-preserving and without resampling (same trick as makeUIImage(fromBytes:)).
+// Only shrinks oversized icons; small icons are returned unchanged so they are
+// never upscaled. Fixes file/asset/URL images that decode at scale 1.0 and would
+// otherwise hand their full pixel dimensions to CarPlay as point dimensions.
+func normalizedIconImage(_ image: UIImage, targetPt: CGFloat = fcpIconTargetPt) -> UIImage {
+  guard let cg = image.cgImage else { return image }
+  let maxPixels = max(CGFloat(cg.width), CGFloat(cg.height))
+  guard maxPixels > 0 else { return image }
+  let neededScale = maxPixels / targetPt
+  guard neededScale > image.scale else { return image }
+  return UIImage(cgImage: cg, scale: neededScale, orientation: image.imageOrientation)
 }
 
 @available(iOS 14.0, *)
@@ -35,7 +57,7 @@ func loadUIImage(
   }
 
   func complete(_ image: UIImage) {
-    let result = image.applyingImageTint(imageTint)
+    let result = normalizedIconImage(image).applyingImageTint(imageTint)
     if let cacheKey = cacheKey {
       fcpTintedImageCache.setObject(result, forKey: cacheKey as NSString)
     }
@@ -237,7 +259,7 @@ extension UIImage {
   }
 
   func applyingImageTint(_ tint: FCPImageTint?) -> UIImage {
-    guard let tint = tint else { return self }
+    guard let tint = tint else { return self.withRenderingMode(.alwaysOriginal) }
 
     let lightTrait = UITraitCollection(userInterfaceStyle: .light)
     let darkTrait = UITraitCollection(userInterfaceStyle: .dark)

@@ -144,6 +144,41 @@ void main() {
     });
   });
 
+  group('rasterize timeout', () {
+    final defaultTimeout = svgRasterizeTimeout;
+
+    tearDown(() {
+      svgRasterizeTimeout = defaultTimeout;
+    });
+
+    test('degrades to null instead of hanging when the pipeline stalls',
+        () async {
+      // Simulates a headless / integration-test environment where the
+      // rasterization pipeline (asset load / SVG decode / toImage) never
+      // completes. A zero timeout must abort the whole operation and yield null
+      // rather than blocking forever.
+      svgRasterizeTimeout = Duration.zero;
+
+      final bytes = await rasterizeSvgAsset(_svgAssetKey);
+      expect(bytes, isNull);
+    });
+
+    test('a timed-out rasterization is not cached', () async {
+      svgRasterizeTimeout = Duration.zero;
+      expect(await rasterizeSvgAsset(_svgAssetKey), isNull);
+
+      // Restoring a generous timeout, the same asset rasterizes normally: the
+      // timeout must not have poisoned the cache with a null.
+      svgRasterizeTimeout = defaultTimeout;
+      final bytes = await rasterizeSvgAsset(_svgAssetKey);
+      expect(bytes, isNotNull);
+      expect(
+        bytes!.sublist(0, 8),
+        equals(<int>[137, 80, 78, 71, 13, 10, 26, 10]),
+      );
+    });
+  });
+
   group('resolveSvgInPayload', () {
     test('adds imageData next to an .svg image and preserves the original',
         () async {

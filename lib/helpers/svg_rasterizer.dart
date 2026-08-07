@@ -13,6 +13,20 @@ import 'package:flutter_svg/flutter_svg.dart';
 /// [resolveSvgInPayload].
 const defaultSvgRasterSize = 120;
 
+/// Maximum time a single SVG rasterization may run before it is abandoned and
+/// treated as a failure (returns `null`).
+///
+/// This bounds the *whole* pipeline — asset load, SVG decode and
+/// [ui.Picture.toImage] — because without a live rendering pipeline (e.g. in
+/// headless / integration-test environments) any of these stages can hang
+/// forever, blocking the method-channel payload walk. Bounding it lets the
+/// presentation layer degrade gracefully — the SVG is dropped (the original asset
+/// string is preserved for native fallback) instead of stalling.
+///
+/// Overridable in tests.
+@visibleForTesting
+Duration svgRasterizeTimeout = const Duration(seconds: 2);
+
 /// In-memory cache of rasterized SVG assets keyed by `assetPath|size`.
 final _svgRasterCache = <String, Uint8List>{};
 
@@ -58,7 +72,12 @@ Future<Uint8List?> rasterizeSvgAsset(
   final inflight = _svgRasterInflight[cacheKey];
   if (inflight != null) return inflight;
 
-  final operation = _rasterize(assetPath, size, cacheKey);
+  // Bound the *entire* rasterization (asset load + SVG decode + toImage), not
+  // just the toImage() call: without a live rendering pipeline any of these
+  // stages can hang forever, and the hang is typically at the load/decode stage
+  // rather than toImage(). On timeout, degrade to null instead of blocking.
+  final operation = _rasterize(assetPath, size, cacheKey)
+      .timeout(svgRasterizeTimeout, onTimeout: () => null);
   _svgRasterInflight[cacheKey] = operation;
   return operation.whenComplete(() => _svgRasterInflight.remove(cacheKey));
 }
