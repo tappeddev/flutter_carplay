@@ -7,7 +7,7 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.dart.DartExecutor
 import io.flutter.embedding.engine.FlutterEngineCache;
 
-class AndroidAutoService : CarAppService() {
+open class AndroidAutoService : CarAppService() {
     companion object {
         /// The Android Auto session that this service is handling.
         var session: AndroidAutoSession? = null
@@ -30,7 +30,7 @@ class AndroidAutoService : CarAppService() {
     }
 
 
-    override fun createHostValidator() = HostValidator.ALLOW_ALL_HOSTS_VALIDATOR
+    open override fun createHostValidator() = HostValidator.ALLOW_ALL_HOSTS_VALIDATOR
 
     override fun onCreateSession(): Session {
         session = AndroidAutoSession()
