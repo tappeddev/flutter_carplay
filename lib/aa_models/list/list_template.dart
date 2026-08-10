@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 
+import '../action.dart';
 import '../template.dart';
 import 'list_section.dart';
 
@@ -10,6 +11,9 @@ class AAListTemplate implements AATemplate {
 
   final String title;
   final List<AAListSection> sections;
+
+  /// Actions displayed in the Android Auto list template action strip.
+  final List<AAAction> actionStrip;
 
   /// An array of title variants displayed when the list is empty.
   ///
@@ -39,6 +43,7 @@ class AAListTemplate implements AATemplate {
   AAListTemplate({
     required this.title,
     required this.sections,
+    this.actionStrip = const [],
     this.emptyViewTitleVariants,
     this.tabTitle,
     this.systemIcon,
@@ -46,6 +51,10 @@ class AAListTemplate implements AATemplate {
     this.onPop,
     String? id,
   })  : assert(
+          actionStrip.length <= 2,
+          'An action strip supports at most 2 actions.',
+        ),
+        assert(
           !sections.any((section) => section.isSelectable) ||
               sections.length == 1,
           'Android Auto selectable list sections cannot be mixed with other sections.',
@@ -61,6 +70,8 @@ class AAListTemplate implements AATemplate {
         'title': title,
         'sections':
             sections.map((AAListSection section) => section.toJson()).toList(),
+        'actionStrip':
+            actionStrip.map((AAAction action) => action.toJson()).toList(),
         'emptyViewTitleVariants': emptyViewTitleVariants,
         'tabTitle': tabTitle,
         'systemIcon': systemIcon,

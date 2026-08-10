@@ -4,6 +4,7 @@ import androidx.car.app.CarContext
 import androidx.car.app.Screen
 import androidx.car.app.ScreenManager
 import androidx.car.app.model.Action
+import androidx.car.app.model.ActionStrip
 import androidx.car.app.model.CarColor
 import androidx.car.app.model.CarIcon
 import androidx.car.app.model.CarText
@@ -17,6 +18,7 @@ import androidx.car.app.model.Pane
 import androidx.car.app.model.PaneTemplate
 import androidx.car.app.model.Row
 import androidx.car.app.model.SectionedItemList
+import androidx.car.app.model.SearchTemplate
 import androidx.car.app.model.Tab
 import androidx.car.app.model.TabContents
 import androidx.car.app.model.TabTemplate
@@ -96,6 +98,8 @@ class FlutterAndroidAutoPlugin : FlutterPlugin, EventChannel.StreamHandler {
                     FAAChannelTypes.updateLongMessageTemplate.name -> updateLongMessageTemplate(call, result)
                     FAAChannelTypes.onListItemSelectedComplete.name -> onListItemSelectedComplete(call, result)
                     FAAChannelTypes.onGridButtonSelectedComplete.name -> onGridButtonSelectedComplete(call, result)
+                    FAAChannelTypes.onSearchResultSelectedComplete.name -> result.success(true)
+                    FAAChannelTypes.updateSearchResults.name -> updateSearchResults(call, result)
                     FAAChannelTypes.setAlert.name -> setAlert(call, result)
                     FAAChannelTypes.closePresent.name -> closePresent(call, result)
                     FAAChannelTypes.updateTabBarTemplates.name -> updateTabBarTemplates(call, result)
@@ -298,6 +302,20 @@ class FlutterAndroidAutoPlugin : FlutterPlugin, EventChannel.StreamHandler {
         rebuildElementTemplate(elementId, result)
     }
 
+    private fun updateSearchResults(call: MethodCall, result: MethodChannel.Result) {
+        val elementId = call.argument<String>("elementId") ?: ""
+        val searchResults = call.argument<List<Map<String, Any?>>>("searchResults") ?: emptyList()
+        val data = templateDataByElementId[elementId]
+        if (data == null) {
+            result.error("No template found", "AASearchTemplate not found with elementId: $elementId", null)
+            return
+        }
+
+        data["items"] = searchResults
+        data["isLoading"] = false
+        rebuildElementTemplate(elementId, result)
+    }
+
     private fun updateMessageTemplate(call: MethodCall, result: MethodChannel.Result) {
         updateMessageTemplate(call, result, "message", "FAAMessageTemplate")
     }
@@ -485,6 +503,7 @@ class FlutterAndroidAutoPlugin : FlutterPlugin, EventChannel.StreamHandler {
         "FAAPaneTemplate" -> getPaneTemplate(data, addBackButton)
         "FAAMessageTemplate" -> getMessageTemplate(data, addBackButton)
         "FAALongMessageTemplate" -> getLongMessageTemplate(data, addBackButton)
+        "FAASearchTemplate" -> getSearchTemplate(data, addBackButton, owningScreen)
         else -> throw IllegalArgumentException("Template type $runtimeType is not supported")
     }
 
@@ -733,6 +752,106 @@ class FlutterAndroidAutoPlugin : FlutterPlugin, EventChannel.StreamHandler {
         }
 
         if (addBackButton) builder.setHeaderAction(Action.BACK)
+        val actions = template.actionStrip.mapNotNull { createAction(carContext, it) }
+        if (actions.isNotEmpty()) {
+            builder.setActionStrip(
+                ActionStrip.Builder().apply { actions.forEach(::addAction) }.build()
+            )
+        }
+        return builder.build()
+    }
+
+    private suspend fun createAction(carContext: CarContext?, action: FAAAction): Action? {
+        val builder = Action.Builder()
+        action.title?.let(builder::setTitle)
+        val image = makeCarIconFromBytes(action.imageData, action.imageTint)
+            ?: if (carContext != null && action.imageUrl != null) {
+                resolveCarIcon(carContext, null, action.imageUrl, action.imageTint)
+            } else null
+        image?.let(builder::setIcon)
+        if (action.title == null && image == null) return null
+        if (action.isOnPressListenerActive) {
+            builder.setOnClickListener {
+                sendEvent(
+                    type = FAAChannelTypes.onActionPressed.name,
+                    data = mapOf("elementId" to action.elementId),
+                )
+            }
+        }
+        return builder.build()
+    }
+
+    private suspend fun getSearchTemplate(
+        data: Map<String, Any?>,
+        addBackButton: Boolean,
+        owningScreen: Screen?,
+    ): Template {
+        val carContext = AndroidAutoService.session?.carContext
+        val template = FAASearchTemplate.fromJson(data)
+        val callback = object : SearchTemplate.SearchCallback {
+            override fun onSearchTextChanged(searchText: String) {
+                val storedData = templateDataByElementId[template.elementId]
+                if (storedData != null) {
+                    storedData["items"] = emptyList<Map<String, Any?>>()
+                    storedData["isLoading"] = true
+                    templatesByElementId[template.elementId] = SearchTemplate.Builder(this)
+                        .setShowKeyboardByDefault(template.showKeyboardByDefault)
+                        .setLoading(true)
+                        .apply {
+                            template.searchHint?.let(::setSearchHint)
+                            if (addBackButton) setHeaderAction(Action.BACK)
+                        }
+                        .build()
+                    owningScreen?.invalidate()
+                }
+                sendEvent(
+                    type = FAAChannelTypes.onSearchTextUpdated.name,
+                    data = mapOf(
+                        "elementId" to template.elementId,
+                        "searchText" to searchText,
+                    ),
+                )
+            }
+
+            override fun onSearchSubmitted(searchText: String) {
+                sendEvent(
+                    type = FAAChannelTypes.onSearchSubmitted.name,
+                    data = mapOf(
+                        "elementId" to template.elementId,
+                        "searchText" to searchText,
+                    ),
+                )
+            }
+        }
+        val builder = SearchTemplate.Builder(callback)
+            .setShowKeyboardByDefault(template.showKeyboardByDefault)
+            .setLoading(template.isLoading)
+        template.searchHint?.let(builder::setSearchHint)
+        if (!template.isLoading) {
+            val items = ItemList.Builder()
+            for (item in template.items) {
+                items.addItem(
+                    createRowFromItem(
+                        carContext,
+                        item,
+                        template.elementId,
+                        "FAASearchTemplate",
+                        owningScreen,
+                        onClick = {
+                            sendEvent(
+                                type = FAAChannelTypes.onSearchResultSelected.name,
+                                data = mapOf(
+                                    "elementId" to template.elementId,
+                                    "itemElementId" to item.elementId,
+                                ),
+                            )
+                        },
+                    )
+                )
+            }
+            builder.setItemList(items.build())
+        }
+        if (addBackButton) builder.setHeaderAction(Action.BACK)
         return builder.build()
     }
 
@@ -789,6 +908,7 @@ class FlutterAndroidAutoPlugin : FlutterPlugin, EventChannel.StreamHandler {
         runtimeType: String,
         owningScreen: Screen?,
         enableOnClick: Boolean = true,
+        onClick: (() -> Unit)? = null,
     ): Row {
         val rowBuilder = Row.Builder().setTitle(CarText.create(item.title))
         item.subtitle?.let { rowBuilder.addText(CarText.create(it)) }
@@ -830,7 +950,9 @@ class FlutterAndroidAutoPlugin : FlutterPlugin, EventChannel.StreamHandler {
             rowBuilder.setToggle(toggleBuilder.build())
         }
 
-        if (enableOnClick && item.isOnPressListenerActive) {
+        if (onClick != null) {
+            rowBuilder.setOnClickListener(onClick)
+        } else if (enableOnClick && item.isOnPressListenerActive) {
             rowBuilder.setOnClickListener {
                 showLoadingForTemplate(templateElementId, runtimeType, item.loadingMessage)
                 sendEvent(

@@ -5,6 +5,7 @@ data class FAAListTemplate(
     val title: String,
     val sections: List<FAAListSection>,
     val emptyViewTitleVariants: List<String>,
+    val actionStrip: List<FAAAction>,
 ) {
     companion object {
         fun fromJson(map: Map<String, Any?>): FAAListTemplate {
@@ -16,8 +17,12 @@ data class FAAListTemplate(
             } ?: emptyList()
             val emptyViewTitleVariants = (map["emptyViewTitleVariants"] as? List<*>)
                 ?.filterIsInstance<String>() ?: emptyList()
+            val actionStrip = (map["actionStrip"] as? List<*>)?.mapNotNull {
+                (it as? Map<*, *>)?.mapKeys { entry -> entry.key.toString() }
+                    ?.let(FAAAction::fromJson)
+            } ?: emptyList()
 
-            return FAAListTemplate(elementId, title, sections, emptyViewTitleVariants)
+            return FAAListTemplate(elementId, title, sections, emptyViewTitleVariants, actionStrip)
         }
     }
 }
