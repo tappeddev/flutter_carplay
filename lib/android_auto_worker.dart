@@ -69,6 +69,33 @@ class FlutterAndroidAuto {
           );
           break;
 
+        case FAAChannelTypes.onActionPressed:
+          _androidAutoController.processFAAActionPressedChannel(
+            event['data']['elementId'],
+          );
+          break;
+
+        case FAAChannelTypes.onSearchTextUpdated:
+          _androidAutoController.processFAASearchTextUpdated(
+            event['data']['elementId'],
+            event['data']['searchText'],
+          );
+          break;
+
+        case FAAChannelTypes.onSearchSubmitted:
+          _androidAutoController.processFAASearchSubmitted(
+            event['data']['elementId'],
+            event['data']['searchText'],
+          );
+          break;
+
+        case FAAChannelTypes.onSearchResultSelected:
+          await _androidAutoController.processFAASearchResultSelected(
+            event['data']['elementId'],
+            event['data']['itemElementId'],
+          );
+          break;
+
         case FAAChannelTypes.onScreenBackButtonPressed:
           final String elementId = event['data']['elementId'];
           final AATemplate? poppedTemplate = FlutterAndroidAutoController
@@ -259,6 +286,7 @@ class FlutterAndroidAuto {
     if (template is AAMessageTemplate) return 'FAAMessageTemplate';
     if (template is AALongMessageTemplate) return 'FAALongMessageTemplate';
     if (template is AAAlertTemplate) return 'FAAAlertTemplate';
+    if (template is AASearchTemplate) return 'FAASearchTemplate';
     return 'FAA${template.runtimeType}';
   }
 }
