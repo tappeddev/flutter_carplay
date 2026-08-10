@@ -254,9 +254,14 @@ class FlutterAndroidAutoPlugin : FlutterPlugin, EventChannel.StreamHandler {
             result.error("Missing template", "template argument is required", null)
             return
         }
+        val tabBarTemplate = try {
+            FAATabBarTemplate.fromJson(data)
+        } catch (e: IllegalArgumentException) {
+            result.error("Invalid template", e.message, null)
+            return
+        }
 
         pluginScope.launch {
-            val tabBarTemplate = FAATabBarTemplate.fromJson(data)
             currentTabBarData = tabBarTemplate
             storeTemplateData(tabBarTemplate.elementId, "FAATabBarTemplate", data, false, currentScreen)
             storeTabData(tabBarTemplate)
@@ -742,10 +747,6 @@ class FlutterAndroidAutoPlugin : FlutterPlugin, EventChannel.StreamHandler {
         } else {
             builder.setLoading(false)
             val isSingleList = template.sections.size == 1 && template.sections.first().title.isEmpty()
-            val hasSelectableList = template.sections.any { it.isSelectable }
-            require(!hasSelectableList || isSingleList) {
-                "A selectable AAListSection must be the only section in an AAListTemplate and must not have a title."
-            }
             if (isSingleList) {
                 builder.setSingleList(
                     createItemListFromSection(carContext, template.sections.first(), template.elementId, "FAAListTemplate", owningScreen)
