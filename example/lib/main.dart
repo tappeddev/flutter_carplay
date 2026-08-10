@@ -125,6 +125,14 @@ class _MyAppState extends State<MyApp> {
             },
           ),
           CPListItem(
+            text: 'Search Template',
+            detailText: 'Search destinations from a CarPlay root template',
+            onPress: (complete, self) async {
+              await complete();
+              await openSearchTemplate();
+            },
+          ),
+          CPListItem(
             text: 'Action Sheet',
             detailText: 'A template that displays a modal action sheet',
             onPress: (complete, self) {
@@ -312,6 +320,14 @@ class _MyAppState extends State<MyApp> {
                 },
               ),
               AAListItem(
+                title: 'Selectable List',
+                subtitle: 'Open Android Auto radio options',
+                onPress: (complete, AAListItem item) {
+                  openAndroidAutoSelectableListTemplate();
+                  complete();
+                },
+              ),
+              AAListItem(
                 title: 'SVG Examples',
                 subtitle: 'Open Android Auto rows backed by SVG assets',
                 imageUrl: 'images/svg_navigation.svg',
@@ -337,38 +353,6 @@ class _MyAppState extends State<MyApp> {
                 imageTint: const AutoImageTint.platform(),
                 onPress: (complete, AAListItem item) {
                   openAndroidAutoPaneTemplate();
-                  complete();
-                },
-              ),
-            ],
-          ),
-          AAListSection(
-            title: 'Second Section',
-            items: [
-              AAListItem(
-                title: 'Selectable List',
-                subtitle: 'Open radio option demo',
-                isBrowsable: true,
-                onPress: (complete, AAListItem item) {
-                  FlutterAndroidAuto.push(
-                    template: AAListTemplate(
-                      title: 'Selectable List',
-                      sections: [
-                        AAListSection(
-                          selectedIndex: 0,
-                          onSelected: (selectedIndex, selectedItem) {
-                            print(
-                              'Selected index: $selectedIndex (${selectedItem.title})',
-                            );
-                          },
-                          items: [
-                            AAListItem(title: 'Radio option 1'),
-                            AAListItem(title: 'Radio option 2'),
-                          ],
-                        ),
-                      ],
-                    ),
-                  );
                   complete();
                 },
               ),
@@ -413,6 +397,26 @@ class _MyAppState extends State<MyApp> {
       ),
     );
     await _flutterAndroidAuto.forceUpdateRootTemplate();
+  }
+
+  void openAndroidAutoSelectableListTemplate() {
+    FlutterAndroidAuto.push(
+      template: AAListTemplate(
+        title: 'Selectable List',
+        sections: [
+          AAListSection(
+            selectedIndex: 0,
+            onSelected: (selectedIndex, selectedItem) {
+              print('Selected index: $selectedIndex (${selectedItem.title})');
+            },
+            items: [
+              AAListItem(title: 'Radio option 1'),
+              AAListItem(title: 'Radio option 2'),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   void openAndroidAutoMessageTemplate() {
@@ -616,6 +620,50 @@ class _MyAppState extends State<MyApp> {
             ),
         ],
         systemIcon: 'systemIcon',
+      ),
+    );
+  }
+
+  Future<void> openSearchTemplate() async {
+    if (!Platform.isIOS) {
+      print('This example has not been yet updated for Android');
+      return;
+    }
+
+    const destinations = [
+      'Apple Park',
+      'Golden Gate Bridge',
+      'San Francisco Ferry Building',
+      'Ocean Beach',
+      'Twin Peaks',
+    ];
+
+    await FlutterCarplay.setRootTemplate(
+      rootTemplate: CPSearchTemplate(
+        onUpdatedSearchText: (searchText, update) {
+          final query = searchText.trim().toLowerCase();
+          final results = destinations
+              .where(
+                (destination) =>
+                    query.isEmpty || destination.toLowerCase().contains(query),
+              )
+              .map(
+                (destination) => CPListItem(
+                  text: destination,
+                  detailText: 'Search result',
+                  accessoryType: CPListItemAccessoryType.disclosureIndicator,
+                ),
+              )
+              .toList();
+          update(results);
+        },
+        onSelectedResult: (selectedItem, complete) {
+          print('Selected search result: ${selectedItem.text}');
+          complete();
+        },
+        onSearchTemplateSearchButtonPressed: () {
+          print('CarPlay search button pressed');
+        },
       ),
     );
   }
