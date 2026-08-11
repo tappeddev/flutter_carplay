@@ -3,6 +3,24 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('AAListTemplate', () {
+    test('serializes action strip actions', () {
+      final template = AAListTemplate(
+        title: 'Vehicles',
+        sections: const [],
+        actionStrip: [AAAction(id: 'search', title: 'Search', onPress: () {})],
+      );
+
+      expect(template.toJson()['actionStrip'], [
+        {
+          '_elementId': 'search',
+          'title': 'Search',
+          'imageUrl': null,
+          'imageTint': null,
+          'onPress': true,
+        },
+      ]);
+    });
+
     test('allows a single selectable section', () {
       final template = AAListTemplate(
         title: 'Audio source',

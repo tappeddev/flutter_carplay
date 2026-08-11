@@ -61,6 +61,12 @@ enum FAAChannelTypes {
   onTabBarItemSelected,
   onGridButtonPressed,
   onGridButtonSelectedComplete,
+  onActionPressed,
+  onSearchTextUpdated,
+  onSearchSubmitted,
+  onSearchResultSelected,
+  onSearchResultSelectedComplete,
+  updateSearchResults,
   updateMessageTemplate,
   updateLongMessageTemplate,
 }

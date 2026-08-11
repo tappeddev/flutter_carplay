@@ -61,6 +61,20 @@ class FlutterAutoAndroidHelper {
     return null;
   }
 
+  AAAction? findAAAction({
+    required List<AATemplate> templates,
+    required String elementId,
+  }) {
+    for (final template in templates) {
+      for (final listTemplate in _listTemplates(template)) {
+        for (final action in listTemplate.actionStrip) {
+          if (action.uniqueId == elementId) return action;
+        }
+      }
+    }
+    return null;
+  }
+
   Iterable<AAListTemplate> _listTemplates(AATemplate template) sync* {
     if (template is AAListTemplate) {
       yield template;

@@ -10,6 +10,7 @@ import '../aa_models/list/list_item.dart';
 import '../aa_models/list/list_section.dart';
 import '../aa_models/list/list_template.dart';
 import '../aa_models/pane/pane_action.dart';
+import '../aa_models/search/search_template.dart';
 import '../aa_models/template.dart';
 import '../android_auto_worker.dart';
 import '../helpers/auto_android_helper.dart';
@@ -161,6 +162,71 @@ class FlutterAndroidAutoController {
       elementId: elementId,
     );
     paneAction?.onPress?.call();
+  }
+
+  void processFAAActionPressedChannel(String elementId) {
+    final action = _androidAutoHelper.findAAAction(
+      templates: templateHistory,
+      elementId: elementId,
+    );
+    action?.onPress?.call();
+  }
+
+  void processFAASearchTextUpdated(String elementId, String searchText) {
+    final template = _findSearchTemplate(elementId);
+    template?.onUpdatedSearchText(searchText, (results) async {
+      template.updateResults(results);
+      await flutterToNativeModule(
+        FAAChannelTypes.updateSearchResults,
+        <String, dynamic>{
+          'elementId': elementId,
+          'searchResults': results.map((item) => item.toJson()).toList(),
+        },
+      );
+    });
+  }
+
+  void processFAASearchSubmitted(String elementId, String searchText) {
+    _findSearchTemplate(elementId)?.onSearchSubmitted?.call(searchText);
+  }
+
+  Future<void> processFAASearchResultSelected(
+    String elementId,
+    String itemElementId,
+  ) async {
+    final template = _findSearchTemplate(elementId);
+    final selectedItem = template?.currentResults
+        .where((item) => item.uniqueId == itemElementId)
+        .firstOrNull;
+    if (template == null || selectedItem == null) return;
+
+    var isCompleted = false;
+    Future<void> complete() async {
+      if (isCompleted) return;
+      isCompleted = true;
+      await flutterToNativeModule(
+        FAAChannelTypes.onSearchResultSelectedComplete,
+        <String, dynamic>{'elementId': elementId},
+      );
+    }
+
+    try {
+      final onSelectedResult = template.onSelectedResult;
+      if (onSelectedResult == null) {
+        await complete();
+      } else {
+        await Future.sync(() => onSelectedResult(selectedItem, complete));
+      }
+    } catch (_) {
+      await complete();
+    }
+  }
+
+  AASearchTemplate? _findSearchTemplate(String elementId) {
+    return templateHistory
+        .whereType<AASearchTemplate>()
+        .where((template) => template.uniqueId == elementId)
+        .firstOrNull;
   }
 
   void processFAAAlertActionPressed(String elementId) {
